@@ -1,10 +1,9 @@
 <template>
   <div>
     <h2>Find local events in your area!</h2>
-
     <!-- Topic input -->
     <span>Event keywords</span>
-    <input type="text">
+    <input type="text" v-model="term">
     <br>
     <!-- Address input -->
     <span>Location to search from</span>
@@ -16,31 +15,53 @@
     <br>
     <!-- Radius input (mi) -->
     <span>Search radius (mi)</span>
-    <input type="number">
+    <input type="number" v-model="radius">
     <br>
-    <button :click="submit">
+    <button @click="submit">
       Go!
     </button>
+    <br>
+    <br>
+    <Events v-if="events.length > 0" :events="events" />
   </div>
 </template>
 
 <script>
-import VueGoogleAutocomplete from 'vue-google-autocomplete'
+import VueGoogleAutocomplete from 'vue-google-autocomplete';
+import { queryEventful } from '../lib/api';
+import Events from './events';
 
 export default {
   name: 'Inputs',
 
   components: {
-    'vue-google-autocomplete': VueGoogleAutocomplete
+    'vue-google-autocomplete': VueGoogleAutocomplete,
+    Events
+  },
+
+  data: function() {
+    return {
+      term: '',
+      zip: '',
+      radius: '',
+      events: []
+    }
   },
 
   methods: {
-    getAddressData(obj, place) {
-      console.log(obj);
-      console.log(place);
+    getAddressData(obj) {
+      this.zip = obj.postal_code;
     },
     submit() {
       // TODO: Validate inputs and then call API service
+      queryEventful(this.term, this.zip, this.radius)
+      .then(response => {
+        this.events = response.events.event;
+      })
+      .catch(error => {
+        console.log('eventful api request failed');
+        console.log(error);
+      })
     }
   }
 }
